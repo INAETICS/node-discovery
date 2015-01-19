@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(inaetics-demonstrator C)
+project(inaetics-node-discovery C)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CELIX_DIR}/share/celix/cmake/modules")
 
