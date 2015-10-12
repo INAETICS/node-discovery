@@ -112,7 +112,9 @@ static celix_status_t etcdWatcher_addAlreadyExistingNodes(node_discovery_pt node
                     node_discovery_addNode(node_discovery, nodeDescription);
                 }
 
-                *highestModified = modIndex;
+                if (modIndex > *highestModified) {
+                    *highestModified = modIndex;
+                }
             }
         }
 
