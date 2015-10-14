@@ -1,4 +1,4 @@
-# Node Wiring
+# Node Wiring [![Build Status](https://travis-ci.org/INAETICS/node-wiring-c.svg?branch=master)](https://travis-ci.org/INAETICS/node-wiring-c)
 
 This branch contains a Celix-based implementation for the INAETICS wiring capabilities.
 
