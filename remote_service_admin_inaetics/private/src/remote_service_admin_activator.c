@@ -10,8 +10,8 @@
 #include "service_registration.h"
 
 #include "remote_service_admin_inaetics_impl.h"
-#include "export_registration_impl.h"
-#include "import_registration_impl.h"
+#include "export_registration_dfi.h"
+#include "import_registration_dfi.h"
 
 #include "wiring_topology_manager.h"
 #include "wiring_endpoint_listener.h"

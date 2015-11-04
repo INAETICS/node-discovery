@@ -19,6 +19,7 @@ include_directories("${PROJECT_SOURCE_DIR}/wiring_common/private/include")
 include_directories("${PROJECT_SOURCE_DIR}/wiring_common/public/include")
 
 include_directories("private/include")
+include_directories("dynamic_function_interface")
 include_directories("${CELIX_INCLUDE_DIR}/remote_services/endpoint_listener/public/include")
 
 SET(BUNDLE_SYMBOLICNAME "apache_celix_wiring_remote_service_admin")
@@ -29,8 +30,8 @@ bundle(org.inaetics.remote_service_admin SOURCES
 	private/src/remote_service_admin_impl
 	private/src/remote_service_admin_activator
 	${CELIX_DIR}/share/celix/log_service/log_helper
-    ${PROJECT_SOURCE_DIR}/remote_service_admin/private/src/export_registration_impl
-    ${PROJECT_SOURCE_DIR}/remote_service_admin/private/src/import_registration_impl
+    ${PROJECT_SOURCE_DIR}/remote_service_admin/private/src/export_registration_dfi
+    ${PROJECT_SOURCE_DIR}/remote_service_admin/private/src/import_registration_dfi
 	${PROJECT_SOURCE_DIR}/wiring_common/private/src/civetweb.c
 )
 
