@@ -351,6 +351,14 @@ celix_status_t importRegistration_close(import_registration_pt registration) {
     return status;
 }
 
+celix_status_t importRegistration_getEndpointDescription(import_registration_pt registration, endpoint_description_pt* endpointDescription) {
+    celix_status_t status = CELIX_SUCCESS;
+    
+    *endpointDescription = registration->endpoint;
+ 
+    return status;
+}
+
 celix_status_t importRegistration_getException(import_registration_pt registration) {
     celix_status_t status = CELIX_SUCCESS;
     //TODO

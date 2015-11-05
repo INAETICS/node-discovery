@@ -39,7 +39,7 @@ celix_status_t bundleActivator_create(bundle_context_pt context, void **userData
 }
 
 celix_status_t bundleActivator_start(void * userData, bundle_context_pt context) {
-    celix_status_t status = CELIX_SUCCESS;
+    celix_status_t status;
     struct activator *activator = userData;
     remote_service_admin_service_pt remoteServiceAdminService = NULL;
 
@@ -183,7 +183,7 @@ static celix_status_t bundleActivator_createEPLTracker(struct activator *activat
 }
 
 static celix_status_t bundleActivator_createWTMTracker(struct activator *activator, service_tracker_pt *tracker) {
-    celix_status_t status = CELIX_SUCCESS;
+    celix_status_t status;
 
     service_tracker_customizer_pt customizer = NULL;
 

@@ -342,10 +342,10 @@ celix_status_t wiringTopologyManager_exportWiringEndpoint(wiring_topology_manage
 
             wiringTopologyManager_getWAs(manager, &wiringAdmins);
 
-            int listCnt = 0;
             int listSize = arrayList_size(wiringAdmins);
 
             if (listSize > 0) {
+                int listCnt = 0;
 
                 wiringAdminList = hashMap_create(NULL, NULL, NULL, NULL);
                 hashMap_put(manager->exportedWiringEndpoints, srvcProperties, wiringAdminList);
@@ -609,7 +609,7 @@ celix_status_t wiringTopologyManager_removeImportedWiringEndpoint(wiring_topolog
 
 /* informs about a sucessful exported wire */
 celix_status_t wiringTopologyManager_notifyListenersWiringEndpointAdded(wiring_topology_manager_pt manager, wiring_endpoint_description_pt wEndpoint) {
-    celix_status_t status = CELIX_SUCCESS;
+    celix_status_t status;
 
     status = celixThreadMutex_lock(&manager->listenerListLock);
 
@@ -647,7 +647,7 @@ celix_status_t wiringTopologyManager_notifyListenersWiringEndpointAdded(wiring_t
 }
 
 celix_status_t wiringTopologyManager_notifyListenersWiringEndpointRemoved(wiring_topology_manager_pt manager, wiring_endpoint_description_pt wEndpoint) {
-    celix_status_t status = CELIX_SUCCESS;
+    celix_status_t status;
 
     status = celixThreadMutex_lock(&manager->listenerListLock);
 

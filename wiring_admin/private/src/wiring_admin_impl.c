@@ -178,26 +178,28 @@ celix_status_t wiringAdmin_stopWebserver(wiring_admin_pt admin) {
 }
 
 celix_status_t wiringAdmin_destroy(wiring_admin_pt* admin) {
-    celix_status_t status = CELIX_SUCCESS;
+    celix_status_t status;
 
     status = wiringAdmin_stopWebserver(*admin);
 
-    celixThreadMutex_lock(&((*admin)->exportedWiringEndpointLock));
-    hashMap_destroy((*admin)->wiringReceiveServices, false, false);
-    hashMap_destroy((*admin)->wiringReceiveTracker, false, false);
-    celixThreadMutex_unlock(&((*admin)->exportedWiringEndpointLock));
-    celixThreadMutex_destroy(&((*admin)->exportedWiringEndpointLock));
+    if (status == CELIX_SUCCESS) {
+		celixThreadMutex_lock(&((*admin)->exportedWiringEndpointLock));
+		hashMap_destroy((*admin)->wiringReceiveServices, false, false);
+		hashMap_destroy((*admin)->wiringReceiveTracker, false, false);
+		celixThreadMutex_unlock(&((*admin)->exportedWiringEndpointLock));
+		celixThreadMutex_destroy(&((*admin)->exportedWiringEndpointLock));
 
-    celixThreadMutex_lock(&((*admin)->importedWiringEndpointLock));
-    hashMap_destroy((*admin)->wiringSendServices, false, false);
-    hashMap_destroy((*admin)->wiringSendRegistrations, false, false);
-    celixThreadMutex_unlock(&((*admin)->importedWiringEndpointLock));
-    celixThreadMutex_destroy(&((*admin)->importedWiringEndpointLock));
+		celixThreadMutex_lock(&((*admin)->importedWiringEndpointLock));
+		hashMap_destroy((*admin)->wiringSendServices, false, false);
+		hashMap_destroy((*admin)->wiringSendRegistrations, false, false);
+		celixThreadMutex_unlock(&((*admin)->importedWiringEndpointLock));
+		celixThreadMutex_destroy(&((*admin)->importedWiringEndpointLock));
 
-    properties_destroy((*admin)->adminProperties);
+		properties_destroy((*admin)->adminProperties);
 
-    free(*admin);
-    *admin = NULL;
+		free(*admin);
+		*admin = NULL;
+    }
 
     return status;
 }
