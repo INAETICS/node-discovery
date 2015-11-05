@@ -22,6 +22,7 @@
 #include <json_serializer.h>
 #include <remote_constants.h>
 #include <remote_service_admin.h>
+#include <endpoint_description.h>
 #include <service_tracker_customizer.h>
 #include <service_tracker.h>
 #include <json_rpc.h>
