@@ -11,8 +11,6 @@ include_directories("${PROJECT_SOURCE_DIR}/wiring_common/public/include")
 include_directories("${PROJECT_SOURCE_DIR}/wiring_common/private/include")
 include_directories("private/include")
 # supposed to be the rsa
-include_directories("${PROJECT_SOURCE_DIR}/echo_server/public/include")
-include_directories("${CELIX_INCLUDE_DIRS}/shell")
 
 
 SET(BUNDLE_SYMBOLICNAME "apache_celix_wiring_admin")
