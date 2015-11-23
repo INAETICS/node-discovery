@@ -27,4 +27,4 @@ bundle(org.inaetics.wiring_admin.WiringAdmin SOURCES
 
 install_bundle(org.inaetics.wiring_admin.WiringAdmin)
     
-target_link_libraries(org.inaetics.wiring_admin.WiringAdmin ${CURL_LIBRARIES})
+target_link_libraries(org.inaetics.wiring_admin.WiringAdmin ${CELIX_FRAMEWORK_LIBRARY} ${CELIX_UTILS_LIBRARY} ${CURL_LIBRARIES})

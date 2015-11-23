@@ -297,7 +297,10 @@ celix_status_t remoteServiceAdmin_addWiringEndpoint(void *handle, wiring_endpoin
 
                 serviceReference_getProperty(reference, (char *) OSGI_FRAMEWORK_SERVICE_ID, &id_str);
 
-                if (strcmp(id_str, exportServiceId) == 0) {
+                if (id_str == NULL) {
+                	logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "service reference misses framework service id\n");
+                }
+                else if (strcmp(id_str, exportServiceId) == 0) {
                     array_list_pt registrations = hashMapEntry_getValue(entry);
                     for (i = 0; i < arrayList_size(registrations); i++) {
 
@@ -505,11 +508,15 @@ static celix_status_t remoteServiceAdmin_registerReceive(remote_service_admin_pt
 static celix_status_t remoteServiceAdmin_unregisterReceive(remote_service_admin_pt admin, char* wireId) {
     celix_status_t status = CELIX_SUCCESS;
 
-
     service_registration_pt wiringReceiveServiceRegistration = hashMap_remove(admin->wiringReceiveServiceRegistrations, wireId);
     wiring_receive_service_pt wiringReceiveService = hashMap_remove(admin->wiringReceiveServices, wireId);
 
     if (wiringReceiveServiceRegistration != NULL) {
+        printf("RSA: unregisterReceive w/ wireId %s\n", wireId);
+        status = serviceRegistration_unregister(wiringReceiveServiceRegistration);
+    }
+
+/*
         char* serviceWireId = NULL;
         array_list_pt references = NULL;
         int i;
@@ -526,6 +533,7 @@ static celix_status_t remoteServiceAdmin_unregisterReceive(remote_service_admin_
             }
         }
     }
+    */
 
     if (wiringReceiveService != NULL) {
         free(wiringReceiveService);
@@ -1190,6 +1198,8 @@ celix_status_t remoteServiceAdmin_wtmAdded(void * handle, service_reference_pt r
 				wtmService->importWiringEndpoint(wtmService->manager, rsaProperties);
 			}
 		}
+
+		hashMapIterator_destroy(importedServicesIterator);
 
 		status = celixThreadMutex_unlock(&admin->importedServicesLock);
     }

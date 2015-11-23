@@ -562,7 +562,7 @@ celix_status_t wiringTopologyManager_importWiringEndpoint(wiring_topology_manage
 
     celixThreadMutex_unlock(&manager->importedWiringEndpointsLock);
 
-    // should be SUCESS, so the RSA can return SUCCESS to the TPM, so
+    // should be SUCCESS, so the RSA can return SUCCESS to the TPM, so
     // it can be removed later (even if it has never been imported)
 
     return status;

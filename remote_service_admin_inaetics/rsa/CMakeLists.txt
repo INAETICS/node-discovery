@@ -48,4 +48,4 @@ bundle(org.inaetics.remote_service_admin SOURCES
 
 install_bundle(org.inaetics.remote_service_admin)
     
-target_link_libraries(org.inaetics.remote_service_admin ${FFI_LIBRARIES} ${CURL_LIBRARIES}  ${JANSSON_LIBRARIES} ${CELIX_DIR}/lib/libdfi.so )
+target_link_libraries(org.inaetics.remote_service_admin ${CELIX_FRAMEWORK_LIBRARY} ${CELIX_UTILS_LIBRARY} ${FFI_LIBRARIES} ${CURL_LIBRARIES}  ${JANSSON_LIBRARIES} ${CELIX_DIR}/lib/libdfi.so )
