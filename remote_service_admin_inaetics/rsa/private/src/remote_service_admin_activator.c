@@ -93,7 +93,7 @@ celix_status_t bundleActivator_start(void * userData, bundle_context_pt context)
                 remoteServiceAdminService->exportReference_getExportedEndpoint = exportReference_getExportedEndpoint;
                 remoteServiceAdminService->exportReference_getExportedService = exportReference_getExportedService;
 
-                remoteServiceAdminService->exportRegistration_close = exportRegistration_close;
+                remoteServiceAdminService->exportRegistration_close = remoteServiceAdmin_removeExportedService;
                 remoteServiceAdminService->exportRegistration_getException = exportRegistration_getException;
                 remoteServiceAdminService->exportRegistration_getExportReference = exportRegistration_getExportReference;
 

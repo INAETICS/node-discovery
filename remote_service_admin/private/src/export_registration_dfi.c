@@ -22,7 +22,6 @@
 #include <json_serializer.h>
 #include <remote_constants.h>
 #include <remote_service_admin.h>
-#include <endpoint_description.h>
 #include <service_tracker_customizer.h>
 #include <service_tracker.h>
 #include <json_rpc.h>
@@ -110,6 +109,8 @@ celix_status_t exportRegistration_create(log_helper_pt helper, service_reference
             status = CELIX_BUNDLE_EXCEPTION;
             logHelper_log(helper, OSGI_LOGSERVICE_ERROR, "Cannot open descriptor '%s'", descriptorFile);
         }
+
+        free(descriptorFile);
     }
 
     if (status == CELIX_SUCCESS) {
@@ -175,6 +176,16 @@ celix_status_t exportRegistration_start(export_registration_pt reg) {
     return status;
 }
 
+
+celix_status_t exportRegistration_stop(export_registration_pt reg) {
+    celix_status_t status = CELIX_SUCCESS;
+    if (status == CELIX_SUCCESS) {
+        status = bundleContext_ungetServiceReference(reg->context, reg->exportReference.reference);
+        serviceTracker_close(reg->tracker);
+    }
+    return status;
+}
+
 static void exportRegistration_addServ(export_registration_pt reg, service_reference_pt ref, void *service) {
     celixThreadMutex_lock(&reg->mutex);
     reg->service = service;
@@ -189,17 +200,13 @@ static void exportRegistration_removeServ(export_registration_pt reg, service_re
     celixThreadMutex_unlock(&reg->mutex);
 }
 
-celix_status_t exportRegistration_stop(export_registration_pt reg) {
-    celix_status_t status = CELIX_SUCCESS;
-    status = bundleContext_ungetService(reg->context, reg->exportReference.reference, NULL);
-    return status;
-}
 
 celix_status_t exportRegistration_close(export_registration_pt reg) {
     celix_status_t status = CELIX_SUCCESS;
     exportRegistration_stop(reg);
     return status;
 }
+
 
 celix_status_t exportRegistration_getException(export_registration_pt registration) {
     celix_status_t status = CELIX_SUCCESS;
@@ -230,8 +237,9 @@ celix_status_t exportReference_getExportedEndpoint(export_reference_pt reference
     return status;
 }
 
-celix_status_t exportReference_getExportedService(export_reference_pt reference) {
+celix_status_t exportReference_getExportedService(export_reference_pt reference, service_reference_pt *ref) {
     celix_status_t status = CELIX_SUCCESS;
+    *ref = reference->reference;
     return status;
 }
 

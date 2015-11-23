@@ -218,8 +218,9 @@ static celix_status_t importRegistration_createProxy(import_registration_pt impo
                 status = CELIX_BUNDLE_EXCEPTION;
             }
         }
-    }
 
+        free(descriptorFile);
+    }
 
     if (status == CELIX_SUCCESS) {
         size_t count = dynInterface_nrOfMethods(proxy->intf);
@@ -348,14 +349,6 @@ static void importRegistration_destroyProxy(struct service_proxy *proxy) {
 celix_status_t importRegistration_close(import_registration_pt registration) {
     celix_status_t status = CELIX_SUCCESS;
     importRegistration_stop(registration);
-    return status;
-}
-
-celix_status_t importRegistration_getEndpointDescription(import_registration_pt registration, endpoint_description_pt* endpointDescription) {
-    celix_status_t status = CELIX_SUCCESS;
-    
-    *endpointDescription = registration->endpoint;
- 
     return status;
 }
 

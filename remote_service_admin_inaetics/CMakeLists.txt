@@ -14,5 +14,4 @@ if(UNIX AND NOT WIN32)
 	endif(CMAKE_UNAME)
 endif(UNIX AND NOT WIN32)
 
-add_subdirectory(dynamic_function_interface)
 add_subdirectory(rsa)

@@ -306,7 +306,7 @@ static int wiringAdmin_callback(struct mg_connection *conn) {
 }
 
 static celix_status_t wiringAdmin_createWiringReceiveTracker(wiring_admin_pt admin, service_tracker_pt *tracker, char* wireId) {
-    celix_status_t status = CELIX_SUCCESS;
+    celix_status_t status;
 
     service_tracker_customizer_pt customizer = NULL;
 
@@ -323,7 +323,7 @@ static celix_status_t wiringAdmin_createWiringReceiveTracker(wiring_admin_pt adm
 }
 
 static celix_status_t wiringAdmin_wiringReceiveAdding(void * handle, service_reference_pt reference, void **service) {
-    celix_status_t status = CELIX_SUCCESS;
+    celix_status_t status;
 
     wiring_admin_pt admin = handle;
 
@@ -500,7 +500,7 @@ celix_status_t wiringAdmin_importWiringEndpoint(wiring_admin_pt admin, wiring_en
 }
 
 celix_status_t wiringAdmin_removeImportedWiringEndpoint(wiring_admin_pt admin, wiring_endpoint_description_pt wEndpointDescription) {
-    celix_status_t status = CELIX_SUCCESS;
+    celix_status_t status;
 
     celixThreadMutex_lock(&admin->importedWiringEndpointLock);
     char* wireId = properties_get(wEndpointDescription->properties, WIRING_ENDPOINT_DESCRIPTION_WIRE_ID_KEY);

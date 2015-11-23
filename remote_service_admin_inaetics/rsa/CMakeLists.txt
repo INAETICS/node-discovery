@@ -17,6 +17,7 @@ include_directories(
 	${CELIX_INCLUDE_DIR}/remote_services/endpoint_listener/public/include
 	${CELIX_INCLUDE_DIR}/log_service
 	${CELIX_INCLUDE_DIR}/remote_service_admin
+	${CELIX_INCLUDE_DIR}/dfi
 	${PROJECT_SOURCE_DIR}/remote_service_admin/private/include
 	${PROJECT_SOURCE_DIR}/wiring_common/private/include
 	${PROJECT_SOURCE_DIR}/wiring_common/public/include
@@ -47,4 +48,4 @@ bundle(org.inaetics.remote_service_admin SOURCES
 
 install_bundle(org.inaetics.remote_service_admin)
     
-target_link_libraries(org.inaetics.remote_service_admin ${CURL_LIBRARIES}  ${JANSSON_LIBRARIES} dfi )
+target_link_libraries(org.inaetics.remote_service_admin ${FFI_LIBRARIES} ${CURL_LIBRARIES}  ${JANSSON_LIBRARIES} ${CELIX_DIR}/lib/libdfi.so )
