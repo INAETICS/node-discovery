@@ -233,6 +233,9 @@ static celix_status_t remoteServiceAdmin_receive(void* handle, char* data, char*
                 exportRegistration_getExportReference(check, &ref);
                 endpoint_description_pt checkEndpoint = NULL;
                 exportReference_getExportedEndpoint(ref, &checkEndpoint);
+                if (ref != NULL) {
+                    free(ref);
+                }
                 if (serviceId == checkEndpoint->serviceId) {
                     export = check;
                     break;
@@ -332,7 +335,7 @@ celix_status_t remoteServiceAdmin_addWiringEndpoint(void *handle, wiring_endpoin
 
             status = celixThreadMutex_unlock(&admin->exportedServicesLock);
         }
-        /* added wiring enpoint is used for import */
+        /* added wiring endpoint is used for import */
         else {
             char* id = properties_get(wEndpoint->properties, "requested.service");
 
@@ -349,21 +352,23 @@ celix_status_t remoteServiceAdmin_addWiringEndpoint(void *handle, wiring_endpoin
                     hash_map_entry_pt entry = hashMapIterator_nextEntry(importedServicesIterator);
                     endpoint_description_pt endpointDescription = (endpoint_description_pt) hashMapEntry_getKey(entry);
 
-                    if (strcmp(id, endpointDescription->id) == 0) {
-                        import_registration_pt import = (import_registration_pt) hashMapEntry_getValue(entry);
+                    if (endpointDescription != NULL) {
+                        if (strcmp(id, endpointDescription->id) == 0) {
+                            import_registration_pt import = (import_registration_pt) hashMapEntry_getValue(entry);
 
-                        if (import == NULL) {
-                            logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "No import registration found for requested service");
-                            status = CELIX_BUNDLE_EXCEPTION;
-                        }
+                            if (import == NULL) {
+                                logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "No import registration found for requested service");
+                                status = CELIX_BUNDLE_EXCEPTION;
+                            }
 
-                        if (status == CELIX_SUCCESS) {
-                            importRegistration_setSendFn(import, (send_func_type) remoteServiceAdmin_send, admin);
-                        }
+                            if (status == CELIX_SUCCESS) {
+                                importRegistration_setSendFn(import, (send_func_type) remoteServiceAdmin_send, admin);
+                            }
 
-                        if (status == CELIX_SUCCESS) {
-                            logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "Registering service factory (proxy) for %s w/ wireId %s.", endpointDescription->service, wireId);
-                            status = importRegistration_start(import);
+                            if (status == CELIX_SUCCESS) {
+                                logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "Registering service factory (proxy) for %s w/ wireId %s.", endpointDescription->service, wireId);
+                                status = importRegistration_start(import);
+                            }
                         }
                     }
                 }
@@ -441,27 +446,36 @@ celix_status_t remoteServiceAdmin_removeWiringEndpoint(void *handle, wiring_endp
     }
     else {
         hash_map_iterator_pt importedServicesIterator = hashMapIterator_create(admin->importedServices);
+
         while (hashMapIterator_hasNext(importedServicesIterator)) {
             hash_map_entry_pt entry = hashMapIterator_nextEntry(importedServicesIterator);
-            endpoint_description_pt endpointDescription = hashMapEntry_getKey(entry);
 
-            char* regWireId = properties_get(endpointDescription->properties, WIRING_ENDPOINT_DESCRIPTION_WIRE_ID_KEY);
+            if (entry != NULL) {
 
-            if (regWireId == NULL) {
-                logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "endpointDescription of %s misses a wire id\n", endpointDescription->service);
-            } else if (strcmp(wireId, regWireId) == 0) {
+                // this one might already be destroyed by the endpoint_discovery_poller
+                endpoint_description_pt endpointDescription = hashMapEntry_getKey(entry);
 
-                /* TODO: registration handling missing - combine w/ removeImportedService */
-                import_registration_pt import = (import_registration_pt) hashMap_remove(admin->importedServices, endpointDescription);
+                char* regWireId = properties_get(endpointDescription->properties, WIRING_ENDPOINT_DESCRIPTION_WIRE_ID_KEY);
 
-                if (import == NULL) {
-                    logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "endpointDescription cannot be found for removal.");
-                } else {
-                    importRegistration_close(import);
-                    importRegistration_destroy(import);
-                    logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "proxyService unregistered for %s w/ wireId %s.", endpointDescription->service, wireId);
+                if (regWireId == NULL) {
+                    logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "endpointDescription of %s misses a wire id\n", endpointDescription->service);
+                } else if (strcmp(wireId, regWireId) == 0) {
+
+                    /* TODO: registration handling missing - combine w/ removeImportedService */
+                    import_registration_pt import = (import_registration_pt) hashMap_get(admin->importedServices, endpointDescription);
+
+                    if (import == NULL) {
+                        logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "endpointDescription cannot be found for removal.");
+                    } else {
+                        importRegistration_close(import);
+
+                        logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "proxyService unregistered for %s w/ wireId %s.", endpointDescription->service, wireId);
+                    }
+                    hashMapIterator_remove(importedServicesIterator);
+
                 }
-
+            } else {
+                logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "received entry was NULL.");
             }
         }
 
@@ -552,7 +566,6 @@ static celix_status_t remoteServiceAdmin_unregisterReceive(remote_service_admin_
 
 celix_status_t remoteServiceAdmin_exportService(remote_service_admin_pt admin, char *serviceId, properties_pt properties, array_list_pt *registrations) {
     celix_status_t status = CELIX_SUCCESS;
-    arrayList_create(registrations);
     array_list_pt references = NULL;
     service_reference_pt reference = NULL;
     char filter[256];
@@ -588,6 +601,9 @@ celix_status_t remoteServiceAdmin_exportService(remote_service_admin_pt admin, c
         }
     }
 
+    if (status == CELIX_SUCCESS) {
+        arrayList_create(registrations);
+    }
 
     if (status == CELIX_SUCCESS) {
         char *interface = provided;
@@ -824,6 +840,8 @@ celix_status_t remoteServiceAdmin_importService(remote_service_admin_pt admin, e
                 celixThreadMutex_lock(&admin->importedServicesLock);
             }
         }
+
+        arrayList_destroy(localWTMs);
 
     }
 

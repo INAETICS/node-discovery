@@ -119,8 +119,7 @@ celix_status_t bundleActivator_start(void * userData, bundle_context_pt context)
 
                 serviceTracker_open(activator->eplTracker);
 
-                // wiring endpoint listener needs to be before wtm tracker, otherwise rsa will not be informed about
-                // wiring endpoints
+                // wiring endpoint listener needs to be before wtm tracker, otherwise rsa will not be informed about wiring endpoints
                 status = bundleContext_registerService(context, (char *) INAETICS_WIRING_ENDPOINT_LISTENER_SERVICE, wEndpointListener, props, &activator->wEndpointListenerRegistration);
 
                 if (status != CELIX_SUCCESS) {

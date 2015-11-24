@@ -327,15 +327,12 @@ celix_status_t wiringTopologyManager_exportWiringEndpoint(wiring_topology_manage
 
         celixThreadMutex_lock(&manager->exportedWiringEndpointsLock);
 
-        // hmm...
         /*
          das problem ist dass srvcProperties auch die serviceId beinhaltet. wenn wir
          nun spaeter einen wiringAdmin hinzufuegen, werden nur die srvcProperties
          von ersterem gertiggeet. ich denke wir brachen eine weitere datenstruktur hier,
          welche sich alle serviceIds merkt
          */
-
-
 
         wiringAdminList = hashMap_get(manager->exportedWiringEndpoints, srvcProperties);
 
