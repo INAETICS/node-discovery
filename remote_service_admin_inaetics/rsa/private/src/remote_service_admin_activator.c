@@ -142,6 +142,18 @@ celix_status_t bundleActivator_stop(void * userData, bundle_context_pt context) 
     celix_status_t status = CELIX_SUCCESS;
     struct activator *activator = userData;
 
+    if (activator->wtmTracker != NULL) {
+    	if (serviceTracker_close(activator->wtmTracker) == CELIX_SUCCESS) {
+    		serviceTracker_destroy(activator->wtmTracker);
+    	}
+    }
+
+    if (activator->eplTracker != NULL) {
+    	if (serviceTracker_close(activator->eplTracker) == CELIX_SUCCESS) {
+    		serviceTracker_destroy(activator->eplTracker);
+    	}
+    }
+
     if (activator->registration != NULL) {
         serviceRegistration_unregister(activator->registration);
         activator->registration = NULL;

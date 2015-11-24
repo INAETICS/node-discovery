@@ -33,7 +33,9 @@ celix_status_t wiringEndpointDescription_create(char* wireId, properties_pt prop
 	}
 
 	if (wireId != NULL) {
-		properties_set(properties, WIRING_ENDPOINT_DESCRIPTION_WIRE_ID_KEY, wireId);
+		if (properties_get(properties, WIRING_ENDPOINT_DESCRIPTION_WIRE_ID_KEY) == NULL) {
+			properties_set(properties, WIRING_ENDPOINT_DESCRIPTION_WIRE_ID_KEY, wireId);
+		}
 	} else {
 		char uuid[37];
 		uuid_t uid;

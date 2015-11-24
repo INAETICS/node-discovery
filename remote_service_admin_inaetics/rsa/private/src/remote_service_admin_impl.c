@@ -104,12 +104,16 @@ celix_status_t remoteServiceAdmin_destroy(remote_service_admin_pt *admin) {
     hashMap_destroy((*admin)->wiringReceiveServices, false, false);
     hashMap_destroy((*admin)->wiringReceiveServiceRegistrations, false, false);
     hashMap_destroy((*admin)->sendServices, false, false);
+    hashMap_destroy((*admin)->listenerList, false, false);
 
     arrayList_destroy((*admin)->exportedWires);
 
     celixThreadMutex_destroy(&(*admin)->sendServicesLock);
     celixThreadMutex_destroy(&(*admin)->exportedServicesLock);
     celixThreadMutex_destroy(&(*admin)->importedServicesLock);
+
+    arrayList_destroy((*admin)->wtmList);
+
 
     free(*admin);
 
@@ -648,6 +652,8 @@ celix_status_t remoteServiceAdmin_exportService(remote_service_admin_pt admin, c
                 printf("RSA: Wire sucessfully exported \n");
             }
         }
+
+        arrayList_destroy(localWTMs);
 
     } else {
         printf("RSA: endpoint installation returned false.\n");

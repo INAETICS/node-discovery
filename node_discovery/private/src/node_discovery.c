@@ -212,6 +212,9 @@ celix_status_t node_discovery_addNode(node_discovery_pt node_discovery, node_des
                 arrayList_add(availableNodeDesc->wiring_ep_descriptions_list, wep);
                 node_discovery_informWiringEndpointListeners(node_discovery, wep, true);
             }
+            else {
+            	wiringEndpointDescription_destroy(&wep);
+            }
         }
         celixThreadMutex_unlock(&node_desc->wiring_ep_desc_list_lock);
         nodeDescription_destroy(node_desc, false);

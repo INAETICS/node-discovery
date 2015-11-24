@@ -99,6 +99,9 @@ celix_status_t wiringTopologyManager_destroy(wiring_topology_manager_pt manager)
     celixThreadMutex_unlock(&manager->exportedWiringEndpointsLock);
     celixThreadMutex_destroy(&manager->exportedWiringEndpointsLock);
 
+    arrayList_destroy(manager->waitingForExport);
+    arrayList_destroy(manager->waitingForImport);
+
     free(manager);
 
     return status;
