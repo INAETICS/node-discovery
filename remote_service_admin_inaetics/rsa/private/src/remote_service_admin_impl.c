@@ -304,7 +304,7 @@ celix_status_t remoteServiceAdmin_addWiringEndpoint(void *handle, wiring_endpoin
                 serviceReference_getProperty(reference, (char *) OSGI_FRAMEWORK_SERVICE_ID, &id_str);
 
                 if (id_str == NULL) {
-                	logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "service reference misses framework service id\n");
+                    logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "RSA: service reference misses framework service id\n");
                 }
                 else if (strcmp(id_str, exportServiceId) == 0) {
                     array_list_pt registrations = hashMapEntry_getValue(entry);
@@ -338,12 +338,12 @@ celix_status_t remoteServiceAdmin_addWiringEndpoint(void *handle, wiring_endpoin
         else {
             char* id = properties_get(wEndpoint->properties, "requested.service");
 
-            logHelper_log(admin->loghelper, OSGI_LOGSERVICE_DEBUG, "imported wiring endpoint available - wire %s service %s\n", wireUuid, id);
+            logHelper_log(admin->loghelper, OSGI_LOGSERVICE_DEBUG, "RSA: imported wiring endpoint available - wire %s service %s\n", wireUuid, id);
 
             celixThreadMutex_lock(&admin->importedServicesLock);
 
             if (hashMap_size(admin->importedServices) == 0) {
-                logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "No imported services found");
+                logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "RSA: No imported services found");
             } else {
                 // TODO: add additional check for serviceName/fwId
                 hash_map_iterator_pt importedServicesIterator = hashMapIterator_create(admin->importedServices);
@@ -356,7 +356,7 @@ celix_status_t remoteServiceAdmin_addWiringEndpoint(void *handle, wiring_endpoin
                             import_registration_pt import = (import_registration_pt) hashMapEntry_getValue(entry);
 
                             if (import == NULL) {
-                                logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "No import registration found for requested service");
+                                logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "RSA: No import registration found for requested service");
                                 status = CELIX_BUNDLE_EXCEPTION;
                             }
 
@@ -365,7 +365,7 @@ celix_status_t remoteServiceAdmin_addWiringEndpoint(void *handle, wiring_endpoin
                             }
 
                             if (status == CELIX_SUCCESS) {
-                                logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "Registering service factory (proxy) for %s w/ wireId %s.", endpointDescription->service, wireId);
+                                logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "RSA: Registering service factory (proxy) for %s w/ wireId %s.", endpointDescription->service, wireId);
                                 status = importRegistration_start(import);
                             }
                         }
@@ -441,7 +441,7 @@ celix_status_t remoteServiceAdmin_removeWiringEndpoint(void *handle, wiring_endp
     celixThreadMutex_lock(&admin->importedServicesLock);
 
     if (hashMap_size(admin->importedServices) == 0) {
-        logHelper_log(admin->loghelper, OSGI_LOGSERVICE_DEBUG, "No importedServices found for removal.");
+        logHelper_log(admin->loghelper, OSGI_LOGSERVICE_DEBUG, "RSA: No importedServices found for removal.");
     }
     else {
         hash_map_iterator_pt importedServicesIterator = hashMapIterator_create(admin->importedServices);
@@ -457,24 +457,24 @@ celix_status_t remoteServiceAdmin_removeWiringEndpoint(void *handle, wiring_endp
                 char* regWireId = properties_get(endpointDescription->properties, WIRING_ENDPOINT_DESCRIPTION_WIRE_ID_KEY);
 
                 if (regWireId == NULL) {
-                    logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "endpointDescription of %s misses a wire id\n", endpointDescription->service);
+                    logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "RSA: endpointDescription of %s misses a wire id\n", endpointDescription->service);
                 } else if (strcmp(wireId, regWireId) == 0) {
 
                     /* TODO: registration handling missing - combine w/ removeImportedService */
                     import_registration_pt import = (import_registration_pt) hashMap_get(admin->importedServices, endpointDescription);
 
                     if (import == NULL) {
-                        logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "endpointDescription cannot be found for removal.");
+                        logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "RSA: endpointDescription cannot be found for removal.");
                     } else {
                         importRegistration_close(import);
 
-                        logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "proxyService unregistered for %s w/ wireId %s.", endpointDescription->service, wireId);
+                        logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "RSA: proxyService unregistered for %s w/ wireId %s.", endpointDescription->service, wireId);
                     }
                     hashMapIterator_remove(importedServicesIterator);
 
                 }
             } else {
-                logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "received entry was NULL.");
+                logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "RSA: received entry was NULL.");
             }
         }
 
@@ -562,7 +562,7 @@ celix_status_t remoteServiceAdmin_exportService(remote_service_admin_pt admin, c
     }
 
     if (reference == NULL) {
-        logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "ERROR: expected a reference for service id %s.", serviceId);
+        logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "RSA: expected a reference for service id %s.", serviceId);
         return CELIX_ILLEGAL_STATE;
     }
 
@@ -664,7 +664,7 @@ celix_status_t remoteServiceAdmin_exportService(remote_service_admin_pt admin, c
 
 celix_status_t remoteServiceAdmin_removeExportedService(remote_service_admin_pt admin, export_registration_pt registration) {
     celix_status_t status;
-    logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "Removing exported service");
+    logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "RSA: Removing exported service");
 
     export_reference_pt  ref = NULL;
     status = exportRegistration_getExportReference(registration, &ref);
@@ -846,12 +846,12 @@ celix_status_t remoteServiceAdmin_removeImportedService(remote_service_admin_pt 
 		import = (import_registration_pt) hashMap_remove(admin->importedServices, endpointDescription);
 
 		if (import == NULL) {
-			logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "endpointDescription cannot be found for removal.");
+			logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "RSA: endpointDescription cannot be found for removal.");
 		}
 		else {
 			importRegistration_close(import);
 			importRegistration_destroy(import);
-			logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "proxyService unregistered for %s w/ wireId %s.", endpointDescription->service);
+			logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "RSA: proxyService unregistered for %s w/ wireId %s.", endpointDescription->service);
 		}
 
 		celixThreadMutex_unlock(&admin->importedServicesLock);
@@ -890,7 +890,7 @@ celix_status_t remoteServiceAdmin_send(remote_service_admin_pt admin, endpoint_d
                 status = wiringSendService->send(wiringSendService, json_data, reply, replyStatus);
 
                 if (status != CELIX_SUCCESS || *reply == NULL) {
-                    logHelper_log(admin->loghelper, OSGI_LOGSERVICE_WARNING, "RSA: wireSendService->send of wireId %s return no success (%d)\n", wireId, status);
+                    logHelper_log(admin->loghelper, OSGI_LOGSERVICE_WARNING, "RSA: wireSendService->send of wireId %s return no success (%d; %d)\n", wireId, status, *replyStatus);
                     wiringSendService->errorCount++;
                 }
 
@@ -1146,7 +1146,7 @@ celix_status_t remoteServiceAdmin_endpointListenerRemoved(void * handle, service
 
     if (status == CELIX_SUCCESS) {
         if (hashMap_remove(admin->listenerList, reference)) {
-            logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "EndpointListener Removed");
+            logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "RSA: EndpointListener Removed");
         }
 
         status = celixThreadMutex_unlock(&admin->listenerListLock);
