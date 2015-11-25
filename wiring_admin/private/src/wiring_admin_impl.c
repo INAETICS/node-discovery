@@ -481,6 +481,7 @@ celix_status_t wiringAdmin_importWiringEndpoint(wiring_admin_pt admin, wiring_en
         wiringSendService->wiringEndpointDescription = wEndpointDescription;
         wiringSendService->send = wiringAdmin_send;
         wiringSendService->admin = admin;
+        wiringSendService->errorCount = 0;
 
         status = bundleContext_registerService(admin->context, (char *) INAETICS_WIRING_SEND_SERVICE, wiringSendService, props, &wiringSendServiceReg);
 
@@ -562,6 +563,7 @@ static celix_status_t wiringAdmin_send(wiring_send_service_pt sendService, char 
             *reply = get.writeptr;
         } else {
             *replyStatus = http_code;
+            free(get.writeptr);
         }
 
         curl_easy_cleanup(curl);

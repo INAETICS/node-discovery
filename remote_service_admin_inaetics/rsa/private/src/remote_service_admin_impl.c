@@ -800,7 +800,6 @@ celix_status_t remoteServiceAdmin_importService(remote_service_admin_pt admin, e
         status = CELIX_SERVICE_EXCEPTION;
     } else {
         printf("RSA: Import service %s w/ wireId %s\n", endpointDescription->service, wireId);
-        import_registration_pt import = NULL;
         const char* objectClass;
 
         objectClass = properties_get(endpointDescription->properties, "objectClass");
@@ -810,11 +809,11 @@ celix_status_t remoteServiceAdmin_importService(remote_service_admin_pt admin, e
             status = CELIX_BUNDLE_EXCEPTION;
         }
         else if (objectClass != NULL) {
-              status = importRegistration_create(admin->context, endpointDescription, objectClass, &import);
+              status = importRegistration_create(admin->context, endpointDescription, objectClass, registration);
         }
 
         if (status == CELIX_SUCCESS) {
-            hashMap_put(admin->importedServices, endpointDescription, import);
+            hashMap_put(admin->importedServices, endpointDescription, *registration);
         }
 
         // request wire
@@ -915,9 +914,16 @@ celix_status_t remoteServiceAdmin_send(remote_service_admin_pt admin, endpoint_d
                 status = wiringSendService->send(wiringSendService, json_data, reply, replyStatus);
 
                 if (status != CELIX_SUCCESS || *reply == NULL) {
-                    printf("RSA: wireSendService->send of wireId %s return no success\n", wireId);
+                        printf("RSA: wireSendService->send of wireId %s return no success (%d)\n", wireId, status);
+
+                    wiringSendService->errorCount++;
                 }
 
+                if (wiringSendService->errorCount >= 5) {
+                    printf("RSA: wireSendService fails five times now .. sleeping for some seconds\n", wireId);
+                    sleep(5);
+                    wiringSendService->errorCount = 0;
+                }
 
                 free(json_data);
                 json_decref(root);
@@ -1063,6 +1069,7 @@ celix_status_t remoteServiceAdmin_notifyListenersEndpointAdded(remote_service_ad
                 status = exportRegistration_getExportReference(export, &reference);
                 if (status == CELIX_SUCCESS) {
                     status = exportReference_getExportedEndpoint(reference, &endpoint);
+                    free(reference);
                 }
 
                 if (status == CELIX_SUCCESS) {

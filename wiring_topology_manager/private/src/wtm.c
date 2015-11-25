@@ -100,6 +100,14 @@ celix_status_t wiringTopologyManager_destroy(wiring_topology_manager_pt manager)
     celixThreadMutex_destroy(&manager->exportedWiringEndpointsLock);
 
     arrayList_destroy(manager->waitingForExport);
+
+    int size = arrayList_size(manager->waitingForImport);
+
+     for (--size; size >= 0; --size) {
+         properties_pt reqProperties = (properties_pt) arrayList_get(manager->waitingForImport, size);
+         properties_destroy(reqProperties);
+     }
+
     arrayList_destroy(manager->waitingForImport);
 
     free(manager);
@@ -132,6 +140,8 @@ celix_status_t wiringTopologyManager_checkWaitingForImportServices(wiring_topolo
                 char* requestedService = properties_get(reqProperties, "requested.service");
                 properties_set(wEndpoint->properties, "requested.service", requestedService);
                 wiringTopologyManager_notifyListenersWiringEndpointAdded(manager, wEndpoint);
+
+                properties_destroy(reqProperties);
             }
         }
 
@@ -302,6 +312,13 @@ celix_status_t wiringTopologyManager_WiringAdminServiceExportWiringEndpoint(wiri
             } else {
 
                 char* serviceId = properties_get(srvcProperties, "service.id");
+                char* reqService = properties_get((*wEndpoint)->properties, "requested.service.id");
+
+                if (reqService != NULL) {
+                    printf("WTM: requested service is already set to %s - will be set to %s\n", reqService, serviceId);
+
+                }
+
                 properties_set((*wEndpoint)->properties, "requested.service.id", serviceId);
                 status = wiringTopologyManager_notifyListenersWiringEndpointAdded(manager, *wEndpoint);
             }
@@ -544,6 +561,13 @@ celix_status_t wiringTopologyManager_importWiringEndpoint(wiring_topology_manage
                 printf("WTM: perform async notify about sucessfully informed WiringEndpoint\n");
 
                 /* async notifiy of RSA */
+                char* reqService = properties_get(wiringEndpointDesc->properties, "requested.service");
+
+                if (reqService != NULL) {
+                    free(reqService);
+                    printf("WTM: requested service is already set to %s - will be set %s\n", reqService, requestedService);
+                }
+
                 properties_set(wiringEndpointDesc->properties, "requested.service", requestedService);
 
                 status = wiringTopologyManager_notifyListenersWiringEndpointAdded(manager, wiringEndpointDesc);
@@ -555,9 +579,11 @@ celix_status_t wiringTopologyManager_importWiringEndpoint(wiring_topology_manage
 
     // according endpoint not found
     if (endpointAvailable == false) {
-            printf("WTM: according endpoint not found for service %s. Putting on the wait list.. \n", requestedService);
-
-           arrayList_add(manager->waitingForImport, rsaProperties);
+        printf("WTM: according endpoint not found for service %s. Putting on the wait list.. \n", requestedService);
+        arrayList_add(manager->waitingForImport, rsaProperties);
+    }
+    else {
+        properties_destroy(rsaProperties);
     }
 
     celixThreadMutex_unlock(&manager->importedWiringEndpointsLock);
