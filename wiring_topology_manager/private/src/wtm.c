@@ -316,7 +316,7 @@ celix_status_t wiringTopologyManager_WiringAdminServiceExportWiringEndpoint(wiri
 
                 if (reqService != NULL) {
                     printf("WTM: requested service is already set to %s - will be set to %s\n", reqService, serviceId);
-
+                    free(reqService);
                 }
 
                 properties_set((*wEndpoint)->properties, "requested.service.id", serviceId);
@@ -564,8 +564,8 @@ celix_status_t wiringTopologyManager_importWiringEndpoint(wiring_topology_manage
                 char* reqService = properties_get(wiringEndpointDesc->properties, "requested.service");
 
                 if (reqService != NULL) {
-                    free(reqService);
                     printf("WTM: requested service is already set to %s - will be set %s\n", reqService, requestedService);
+                    free(reqService);
                 }
 
                 properties_set(wiringEndpointDesc->properties, "requested.service", requestedService);

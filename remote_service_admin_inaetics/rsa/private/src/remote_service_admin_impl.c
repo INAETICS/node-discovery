@@ -250,7 +250,7 @@ static celix_status_t remoteServiceAdmin_receive(void* handle, char* data, char*
             status = exportRegistration_call(export, request, -1, response, &responceLength);
 
             if (status != CELIX_SUCCESS) {
-                printf("Error trying to invoke remove service, got error %i\n", status);
+                logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "RSA: Error trying to invoke remove service, got error %i\n", status);
             }
         }
         free(request);
@@ -282,10 +282,9 @@ celix_status_t remoteServiceAdmin_addWiringEndpoint(void *handle, wiring_endpoin
 
         /* added wiring enpoint is used for export */
         if (wireUuid != NULL && strcmp(ownUuid, wireUuid) == 0) {
-            char* exportServiceId = NULL;
+            char* exportServiceId = properties_get(wEndpoint->properties, (char*) "requested.service.id");
 
-            exportServiceId = properties_get(wEndpoint->properties, (char*) "requested.service.id");
-            printf("RSA: exported wire available %s for serviceId %s\n", wireUuid, exportServiceId);
+            logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "RSA: exported wire available %s for serviceId %s\n", wireUuid, exportServiceId);
 
             if (!arrayList_contains(admin->exportedWires, wireId)) {
                 arrayList_add(admin->exportedWires, wireId);
@@ -389,7 +388,7 @@ celix_status_t remoteServiceAdmin_removeWiringEndpoint(void *handle, wiring_endp
     remote_service_admin_pt admin = (remote_service_admin_pt) handle;
     char* wireId = properties_get(wEndpoint->properties, WIRING_ENDPOINT_DESCRIPTION_WIRE_ID_KEY);
 
-    printf("RSA: Removing wiring endpoint w/ wireId %s\n", wireId);
+    logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "RSA: Removing wiring endpoint w/ wireId %s\n", wireId);
 
     /* handle exported Wires */
     array_list_pt exportRegistrationList = NULL;
@@ -496,10 +495,12 @@ static celix_status_t remoteServiceAdmin_registerReceive(remote_service_admin_pt
     if (!wiringReceiveService) {
         status = CELIX_ENOMEM;
     } else if (hashMap_containsKey(admin->wiringReceiveServices, wireId)) {
-        printf("RSA: registerReceivewireId %s already known\n", wireId);
+        logHelper_log(admin->loghelper, OSGI_LOGSERVICE_DEBUG, "RSA: registerReceivewireId %s already known\n", wireId);
     } else {
         properties_pt props = properties_create();
         service_registration_pt wiringReceiveServiceRegistration = NULL;
+
+        logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "RSA: registerReceive w/ wireId %s\n", wireId);
 
         properties_set(props, (char*) INAETICS_WIRING_WIRE_ID, wireId);
 
@@ -507,14 +508,11 @@ static celix_status_t remoteServiceAdmin_registerReceive(remote_service_admin_pt
         wiringReceiveService->receive = remoteServiceAdmin_receive;
         wiringReceiveService->wireId = wireId;
 
-        printf("RSA: registerReceive w/ wireId %s\n", wireId);
-
         status = bundleContext_registerService(admin->context, (char *) INAETICS_WIRING_RECEIVE_SERVICE, wiringReceiveService, props, &wiringReceiveServiceRegistration);
 
         if (status == CELIX_SUCCESS) {
             hashMap_put(admin->wiringReceiveServices, wireId, wiringReceiveService);
             hashMap_put(admin->wiringReceiveServiceRegistrations, wireId, wiringReceiveServiceRegistration);
-
         } else {
             free(wiringReceiveService);
         }
@@ -530,28 +528,9 @@ static celix_status_t remoteServiceAdmin_unregisterReceive(remote_service_admin_
     wiring_receive_service_pt wiringReceiveService = hashMap_remove(admin->wiringReceiveServices, wireId);
 
     if (wiringReceiveServiceRegistration != NULL) {
-        printf("RSA: unregisterReceive w/ wireId %s\n", wireId);
+        logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "RSA: unregisterReceive w/ wireId %s\n", wireId);
         status = serviceRegistration_unregister(wiringReceiveServiceRegistration);
     }
-
-/*
-        char* serviceWireId = NULL;
-        array_list_pt references = NULL;
-        int i;
-
-        serviceRegistration_getServiceReferences(wiringReceiveServiceRegistration, &references);
-
-        for (i = 0; i < arrayList_size(references); i++) {
-            service_reference_pt reference = (service_reference_pt) arrayList_get(references, i);
-            serviceReference_getProperty(reference, (char*) INAETICS_WIRING_WIRE_ID, &serviceWireId);
-
-            if (strcmp(wireId, serviceWireId) == 0) {
-                printf("RSA: unregisterReceive w/ wireId %s\n", wireId);
-                status = serviceRegistration_unregister(wiringReceiveServiceRegistration);
-            }
-        }
-    }
-    */
 
     if (wiringReceiveService != NULL) {
         free(wiringReceiveService);
@@ -611,7 +590,8 @@ celix_status_t remoteServiceAdmin_exportService(remote_service_admin_pt admin, c
         export_registration_pt registration = NULL;
 
         remoteServiceAdmin_createEndpointDescription(admin, reference, interface, &endpoint);
-        printf("RSA: Creating export registration with endpoint pointer %p\n", endpoint);
+        logHelper_log(admin->loghelper, OSGI_LOGSERVICE_DEBUG, "RSA: Creating export registration with endpoint pointer %p\n", endpoint);
+
         //TOOD precheck if descriptor exists
         status = exportRegistration_create(admin->loghelper, reference, endpoint, admin->context, &registration);
         if (status == CELIX_SUCCESS) {
@@ -654,7 +634,7 @@ celix_status_t remoteServiceAdmin_exportService(remote_service_admin_pt admin, c
 
         int size = arrayList_size(localWTMs);
         if (size == 0) {
-            printf("RSA: No WTM available yet.\n");
+            logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "RSA: No WTM available yet.\n");
             status = CELIX_SERVICE_EXCEPTION;
         }
         int iter;
@@ -662,17 +642,15 @@ celix_status_t remoteServiceAdmin_exportService(remote_service_admin_pt admin, c
             wiring_topology_manager_service_pt wtmService = arrayList_get(localWTMs, iter);
 
             if (wtmService->exportWiringEndpoint(wtmService->manager, properties) != CELIX_SUCCESS) {
-                printf("RSA: Wire export failed\n");
+                logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "RSA: Wire export failed\n");
                 status = CELIX_SERVICE_EXCEPTION;
             } else {
-                printf("RSA: Wire sucessfully exported \n");
+                logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "RSA: Wire sucessfully exported \n");
             }
         }
 
         arrayList_destroy(localWTMs);
 
-    } else {
-        printf("RSA: endpoint installation returned false.\n");
     }
 
     /*
@@ -698,7 +676,7 @@ celix_status_t remoteServiceAdmin_removeExportedService(remote_service_admin_pt 
         hashMap_remove(admin->exportedServices, ref);
         celixThreadMutex_unlock(&admin->exportedServicesLock);
     } else {
-        printf("Cannot find reference for registration");
+        logHelper_log(admin->loghelper, OSGI_LOGSERVICE_WARNING, "RSA: Cannot find reference for registration");
     }
     return status;
 }
@@ -796,16 +774,15 @@ celix_status_t remoteServiceAdmin_importService(remote_service_admin_pt admin, e
     char* wireId = properties_get(endpointDescription->properties, WIRING_ENDPOINT_DESCRIPTION_WIRE_ID_KEY);
 
     if (wireId == NULL) {
-        printf("RSA: Missing WireId for service %s\n", endpointDescription->service);
+        logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "RSA: Missing WireId for service %s\n", endpointDescription->service);
         status = CELIX_SERVICE_EXCEPTION;
     } else {
-        printf("RSA: Import service %s w/ wireId %s\n", endpointDescription->service, wireId);
-        const char* objectClass;
+        const char* objectClass = properties_get(endpointDescription->properties, "objectClass");
 
-        objectClass = properties_get(endpointDescription->properties, "objectClass");
+        logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "RSA: Import service %s w/ wireId %s\n", endpointDescription->service, wireId);
 
         if (hashMap_containsKey(admin->importedServices, endpointDescription)) {
-            printf("RSA: IMPORTED SERVICE %s %s ALREADY FOUND\n", endpointDescription->service, wireId);
+            logHelper_log(admin->loghelper, OSGI_LOGSERVICE_WARNING, "RSA: Imported services %s w/ wireId %s already available", endpointDescription->service, wireId);
             status = CELIX_BUNDLE_EXCEPTION;
         }
         else if (objectClass != NULL) {
@@ -822,7 +799,7 @@ celix_status_t remoteServiceAdmin_importService(remote_service_admin_pt admin, e
 
         int size = arrayList_size(localWTMs);
         if (size == 0) {
-            printf("RSA: No WTM available yet.\n");
+            logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "RSA: No WTM available yet.\n");
         }
         else {
             int iter;
@@ -885,11 +862,10 @@ celix_status_t remoteServiceAdmin_removeImportedService(remote_service_admin_pt 
 
 celix_status_t remoteServiceAdmin_send(remote_service_admin_pt admin, endpoint_description_pt endpointDescription, char *request, char **reply, int* replyStatus) {
     celix_status_t status = CELIX_ILLEGAL_ARGUMENT;
-
     char* wireId = properties_get(endpointDescription->properties, (char*) WIRING_ENDPOINT_DESCRIPTION_WIRE_ID_KEY);
 
     if (wireId == NULL) {
-        printf("RSA: send called w/ proper endpoint_description: wireId missing.\n");
+        logHelper_log(admin->loghelper, OSGI_LOGSERVICE_ERROR, "RSA: send called w/ proper endpoint_description: wireId missing.\n");
     } else {
         wiring_send_service_pt wiringSendService = NULL;
 
@@ -899,7 +875,7 @@ celix_status_t remoteServiceAdmin_send(remote_service_admin_pt admin, endpoint_d
             wiringSendService = hashMap_get(admin->sendServices, wireId);
 
             if (wiringSendService == NULL) {
-                printf("RSA: No SendService w/ wireId %s found.\n", wireId);
+                logHelper_log(admin->loghelper, OSGI_LOGSERVICE_WARNING, "RSA: No SendService w/ wireId %s found.\n", wireId);
                 status = CELIX_ILLEGAL_ARGUMENT;
             } else {
                 json_t *root;
@@ -914,13 +890,12 @@ celix_status_t remoteServiceAdmin_send(remote_service_admin_pt admin, endpoint_d
                 status = wiringSendService->send(wiringSendService, json_data, reply, replyStatus);
 
                 if (status != CELIX_SUCCESS || *reply == NULL) {
-                        printf("RSA: wireSendService->send of wireId %s return no success (%d)\n", wireId, status);
-
+                    logHelper_log(admin->loghelper, OSGI_LOGSERVICE_WARNING, "RSA: wireSendService->send of wireId %s return no success (%d)\n", wireId, status);
                     wiringSendService->errorCount++;
                 }
 
                 if (wiringSendService->errorCount >= 5) {
-                    printf("RSA: wireSendService fails five times now .. sleeping for some seconds\n", wireId);
+                    logHelper_log(admin->loghelper, OSGI_LOGSERVICE_WARNING, "RSA: wireSendService fails five times now .. sleeping for some seconds\n");
                     sleep(5);
                     wiringSendService->errorCount = 0;
                 }
@@ -950,9 +925,9 @@ static celix_status_t remoteServiceAdmin_createSendServiceTracker(remote_service
         status = serviceTracker_createWithFilter(admin->context, filter, customizer, &admin->sendServicesTracker);
 
         if ((status == CELIX_SUCCESS) && (serviceTracker_open(admin->sendServicesTracker) == CELIX_SUCCESS)) {
-            printf("RSA: sendServiceTracker created w/ filter %s\n", filter);
+            logHelper_log(admin->loghelper, OSGI_LOGSERVICE_DEBUG, "RSA: sendServiceTracker created w/ filter %s\n", filter);
         } else {
-            printf("RSA: sendServiceTracker could not be created w/ %s\n", filter);
+            logHelper_log(admin->loghelper, OSGI_LOGSERVICE_DEBUG, "RSA: sendServiceTracker could not be created w/ %s\n", filter);
         }
     }
 
@@ -983,13 +958,13 @@ static celix_status_t remoteServiceAdmin_sendServiceAdding(void * handle, servic
 
 static celix_status_t remoteServiceAdmin_sendServiceAdded(void * handle, service_reference_pt reference, void * service) {
     celix_status_t status;
-
     remote_service_admin_pt admin = (remote_service_admin_pt) handle;
-
-    printf("RSA: Send Service Added\n");
-
     wiring_send_service_pt wiringSendService = (wiring_send_service_pt) service;
-    char* wireId = properties_get(wiringSendService->wiringEndpointDescription->properties, WIRING_ENDPOINT_DESCRIPTION_WIRE_ID_KEY);
+    char* wireId;
+
+    logHelper_log(admin->loghelper, OSGI_LOGSERVICE_DEBUG, "RSA: Send Service Added\n");
+
+    wireId = properties_get(wiringSendService->wiringEndpointDescription->properties, WIRING_ENDPOINT_DESCRIPTION_WIRE_ID_KEY);
 
     status = celixThreadMutex_lock(&admin->sendServicesLock);
 
@@ -1010,10 +985,10 @@ static celix_status_t remoteServiceAdmin_sendServiceModified(void * handle, serv
 static celix_status_t remoteServiceAdmin_sendServiceRemoved(void * handle, service_reference_pt reference, void * service) {
     celix_status_t status;
     remote_service_admin_pt admin = (remote_service_admin_pt) handle;
-
     wiring_send_service_pt wiringSendService = (wiring_send_service_pt) service;
     char* wireId = properties_get(wiringSendService->wiringEndpointDescription->properties, WIRING_ENDPOINT_DESCRIPTION_WIRE_ID_KEY);
-    printf("RSA: Send Service Removed for wireId %s\n", wireId);
+
+    logHelper_log(admin->loghelper, OSGI_LOGSERVICE_DEBUG, "RSA: Send Service Removed for wireId %s\n", wireId);
 
     status = celixThreadMutex_lock(&admin->sendServicesLock);
 
@@ -1195,10 +1170,9 @@ celix_status_t remoteServiceAdmin_wtmAdded(void * handle, service_reference_pt r
     celix_status_t status;
     struct activator* activator = (struct activator*) handle;
     remote_service_admin_pt admin = activator->admin;
-
     wiring_topology_manager_service_pt wtmService = (wiring_topology_manager_service_pt) service;
 
-    printf("RSA: Added WTM\n");
+    logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "RSA: Added WTM");
 
     status = celixThreadMutex_lock(&admin->wtmListLock);
 
@@ -1221,7 +1195,7 @@ celix_status_t remoteServiceAdmin_wtmAdded(void * handle, service_reference_pt r
 			char* wireId = properties_get(endpointDescription->properties, WIRING_ENDPOINT_DESCRIPTION_WIRE_ID_KEY);
 
 			if (wireId == NULL) {
-				printf("RSA: Missing WireId for service %s\n", endpointDescription->service);
+			    logHelper_log(admin->loghelper, OSGI_LOGSERVICE_WARNING, "RSA: Missing WireId for service %s\n", endpointDescription->service);
 			} else {
 				properties_set(rsaProperties, WIRING_ENDPOINT_DESCRIPTION_WIRE_ID_KEY, wireId);
 				properties_set(rsaProperties, "requested.service", endpointDescription->id);
