@@ -8,12 +8,13 @@ celix_status_t wiring_getIpAddress(char* interface, char** ip) {
 	celix_status_t status = CELIX_BUNDLE_EXCEPTION;
 
 	struct ifaddrs *ifaddr, *ifa;
-	char host[NI_MAXHOST];
 
 	if (getifaddrs(&ifaddr) != -1)
 	{
 		for (ifa = ifaddr; ifa != NULL && status != CELIX_SUCCESS; ifa = ifa->ifa_next)
 		{
+			char host[NI_MAXHOST];
+
 			if (ifa->ifa_addr == NULL)
 				continue;
 

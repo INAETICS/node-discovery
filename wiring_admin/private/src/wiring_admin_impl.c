@@ -178,26 +178,28 @@ celix_status_t wiringAdmin_stopWebserver(wiring_admin_pt admin) {
 }
 
 celix_status_t wiringAdmin_destroy(wiring_admin_pt* admin) {
-    celix_status_t status = CELIX_SUCCESS;
+    celix_status_t status;
 
     status = wiringAdmin_stopWebserver(*admin);
 
-    celixThreadMutex_lock(&((*admin)->exportedWiringEndpointLock));
-    hashMap_destroy((*admin)->wiringReceiveServices, false, false);
-    hashMap_destroy((*admin)->wiringReceiveTracker, false, false);
-    celixThreadMutex_unlock(&((*admin)->exportedWiringEndpointLock));
-    celixThreadMutex_destroy(&((*admin)->exportedWiringEndpointLock));
+    if (status == CELIX_SUCCESS) {
+		celixThreadMutex_lock(&((*admin)->exportedWiringEndpointLock));
+		hashMap_destroy((*admin)->wiringReceiveServices, false, false);
+		hashMap_destroy((*admin)->wiringReceiveTracker, false, false);
+		celixThreadMutex_unlock(&((*admin)->exportedWiringEndpointLock));
+		celixThreadMutex_destroy(&((*admin)->exportedWiringEndpointLock));
 
-    celixThreadMutex_lock(&((*admin)->importedWiringEndpointLock));
-    hashMap_destroy((*admin)->wiringSendServices, false, false);
-    hashMap_destroy((*admin)->wiringSendRegistrations, false, false);
-    celixThreadMutex_unlock(&((*admin)->importedWiringEndpointLock));
-    celixThreadMutex_destroy(&((*admin)->importedWiringEndpointLock));
+		celixThreadMutex_lock(&((*admin)->importedWiringEndpointLock));
+		hashMap_destroy((*admin)->wiringSendServices, false, false);
+		hashMap_destroy((*admin)->wiringSendRegistrations, false, false);
+		celixThreadMutex_unlock(&((*admin)->importedWiringEndpointLock));
+		celixThreadMutex_destroy(&((*admin)->importedWiringEndpointLock));
 
-    properties_destroy((*admin)->adminProperties);
+		properties_destroy((*admin)->adminProperties);
 
-    free(*admin);
-    *admin = NULL;
+		free(*admin);
+		*admin = NULL;
+    }
 
     return status;
 }
@@ -304,7 +306,7 @@ static int wiringAdmin_callback(struct mg_connection *conn) {
 }
 
 static celix_status_t wiringAdmin_createWiringReceiveTracker(wiring_admin_pt admin, service_tracker_pt *tracker, char* wireId) {
-    celix_status_t status = CELIX_SUCCESS;
+    celix_status_t status;
 
     service_tracker_customizer_pt customizer = NULL;
 
@@ -321,7 +323,7 @@ static celix_status_t wiringAdmin_createWiringReceiveTracker(wiring_admin_pt adm
 }
 
 static celix_status_t wiringAdmin_wiringReceiveAdding(void * handle, service_reference_pt reference, void **service) {
-    celix_status_t status = CELIX_SUCCESS;
+    celix_status_t status;
 
     wiring_admin_pt admin = handle;
 
@@ -479,6 +481,7 @@ celix_status_t wiringAdmin_importWiringEndpoint(wiring_admin_pt admin, wiring_en
         wiringSendService->wiringEndpointDescription = wEndpointDescription;
         wiringSendService->send = wiringAdmin_send;
         wiringSendService->admin = admin;
+        wiringSendService->errorCount = 0;
 
         status = bundleContext_registerService(admin->context, (char *) INAETICS_WIRING_SEND_SERVICE, wiringSendService, props, &wiringSendServiceReg);
 
@@ -498,7 +501,7 @@ celix_status_t wiringAdmin_importWiringEndpoint(wiring_admin_pt admin, wiring_en
 }
 
 celix_status_t wiringAdmin_removeImportedWiringEndpoint(wiring_admin_pt admin, wiring_endpoint_description_pt wEndpointDescription) {
-    celix_status_t status = CELIX_SUCCESS;
+    celix_status_t status;
 
     celixThreadMutex_lock(&admin->importedWiringEndpointLock);
     char* wireId = properties_get(wEndpointDescription->properties, WIRING_ENDPOINT_DESCRIPTION_WIRE_ID_KEY);
@@ -560,6 +563,7 @@ static celix_status_t wiringAdmin_send(wiring_send_service_pt sendService, char 
             *reply = get.writeptr;
         } else {
             *replyStatus = http_code;
+            free(get.writeptr);
         }
 
         curl_easy_cleanup(curl);

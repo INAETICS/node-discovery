@@ -46,6 +46,7 @@ typedef struct wiring_send_service *wiring_send_service_pt;
 
 struct wiring_send_service {
 	wiring_admin_pt admin;
+	unsigned int errorCount;
 	wiring_endpoint_description_pt wiringEndpointDescription;
 	celix_status_t (*send)(wiring_send_service_pt sendService, char *request, char **reply, int* replyStatus);
 };

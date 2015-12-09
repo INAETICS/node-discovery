@@ -212,6 +212,9 @@ celix_status_t node_discovery_addNode(node_discovery_pt node_discovery, node_des
                 arrayList_add(availableNodeDesc->wiring_ep_descriptions_list, wep);
                 node_discovery_informWiringEndpointListeners(node_discovery, wep, true);
             }
+            else {
+            	wiringEndpointDescription_destroy(&wep);
+            }
         }
         celixThreadMutex_unlock(&node_desc->wiring_ep_desc_list_lock);
         nodeDescription_destroy(node_desc, false);
@@ -317,7 +320,10 @@ celix_status_t node_discovery_informWiringEndpointListeners(node_discovery_pt no
                 if (matchResult) {
                     bundleContext_getService(node_discovery->context, reference, (void**) &listener);
                     if (wEndpointAdded) {
-                        listener->wiringEndpointAdded(listener->handle, wEndpoint, scope);
+                    	char* isRsa = NULL;
+                    	serviceReference_getProperty(reference, (char *) "RSA", &isRsa);
+                    	if (isRsa == NULL)
+                    		listener->wiringEndpointAdded(listener->handle, wEndpoint, scope);
                     } else {
                         listener->wiringEndpointRemoved(listener->handle, wEndpoint, scope);
                     }

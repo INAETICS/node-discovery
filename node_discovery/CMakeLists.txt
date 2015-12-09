@@ -32,4 +32,4 @@ bundle(org.inaetics.node_discovery.etcd.NodeDiscovery SOURCES
 
 install_bundle(org.inaetics.node_discovery.etcd.NodeDiscovery)
 	
-target_link_libraries(org.inaetics.node_discovery.etcd.NodeDiscovery ${CURL_LIBRARIES} ${JANSSON_LIBRARIES})
+target_link_libraries(org.inaetics.node_discovery.etcd.NodeDiscovery  ${CELIX_FRAMEWORK_LIBRARY} ${CELIX_UTILS_LIBRARY} ${CURL_LIBRARIES} ${JANSSON_LIBRARIES})

@@ -37,12 +37,11 @@ celix_status_t bundleActivator_create(bundle_context_pt context, void **userData
 }
 
 celix_status_t bundleActivator_start(void * userData, bundle_context_pt context) {
-	celix_status_t status = CELIX_SUCCESS;
+	celix_status_t status;
 	struct activator *activator = userData;
 
 	status = wiringAdmin_create(context, &activator->admin);
 	if (status == CELIX_SUCCESS) {
-
 		activator->wiringAdminService = calloc(1, sizeof(struct wiring_admin_service));
 		if (!activator->wiringAdminService) {
 			status = CELIX_ENOMEM;
@@ -79,26 +78,33 @@ celix_status_t bundleActivator_start(void * userData, bundle_context_pt context)
 }
 
 celix_status_t bundleActivator_stop(void * userData, bundle_context_pt context) {
-	celix_status_t status = CELIX_SUCCESS;
-	struct activator *activator = userData;
+	celix_status_t status;
+	struct activator* activator = (struct activator*) userData;
 
-	wiringAdmin_stop(activator->admin);
-	serviceRegistration_unregister(activator->registration);
-	activator->registration = NULL;
+	status = wiringAdmin_stop(activator->admin);
 
-	free(activator->wiringAdminService);
-	activator->wiringAdminService = NULL;
+	if (status == CELIX_SUCCESS) {
+		serviceRegistration_unregister(activator->registration);
+	}
+
+	if (status == CELIX_SUCCESS) {
+		activator->registration = NULL;
+		free(activator->wiringAdminService);
+		activator->wiringAdminService = NULL;
+	}
 
 	return status;
 }
 
 celix_status_t bundleActivator_destroy(void * userData, bundle_context_pt context) {
-	celix_status_t status = CELIX_SUCCESS;
+	celix_status_t status;
 	struct activator *activator = userData;
 
 	status = wiringAdmin_destroy(&activator->admin);
 
-	free(activator);
+	if (status == CELIX_SUCCESS) {
+		free(activator);
+	}
 
 	return status;
 }

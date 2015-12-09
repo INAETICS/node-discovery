@@ -10,8 +10,8 @@
 #include "service_registration.h"
 
 #include "remote_service_admin_inaetics_impl.h"
-#include "export_registration_impl.h"
-#include "import_registration_impl.h"
+#include "export_registration_dfi.h"
+#include "import_registration_dfi.h"
 
 #include "wiring_topology_manager.h"
 #include "wiring_endpoint_listener.h"
@@ -39,7 +39,7 @@ celix_status_t bundleActivator_create(bundle_context_pt context, void **userData
 }
 
 celix_status_t bundleActivator_start(void * userData, bundle_context_pt context) {
-    celix_status_t status = CELIX_SUCCESS;
+    celix_status_t status;
     struct activator *activator = userData;
     remote_service_admin_service_pt remoteServiceAdminService = NULL;
 
@@ -93,7 +93,7 @@ celix_status_t bundleActivator_start(void * userData, bundle_context_pt context)
                 remoteServiceAdminService->exportReference_getExportedEndpoint = exportReference_getExportedEndpoint;
                 remoteServiceAdminService->exportReference_getExportedService = exportReference_getExportedService;
 
-                remoteServiceAdminService->exportRegistration_close = exportRegistration_close;
+                remoteServiceAdminService->exportRegistration_close = remoteServiceAdmin_removeExportedService;
                 remoteServiceAdminService->exportRegistration_getException = exportRegistration_getException;
                 remoteServiceAdminService->exportRegistration_getExportReference = exportRegistration_getExportReference;
 
@@ -119,8 +119,7 @@ celix_status_t bundleActivator_start(void * userData, bundle_context_pt context)
 
                 serviceTracker_open(activator->eplTracker);
 
-                // wiring endpoint listener needs to be before wtm tracker, otherwise rsa will not be informed about
-                // wiring endpoints
+                // wiring endpoint listener needs to be before wtm tracker, otherwise rsa will not be informed about wiring endpoints
                 status = bundleContext_registerService(context, (char *) INAETICS_WIRING_ENDPOINT_LISTENER_SERVICE, wEndpointListener, props, &activator->wEndpointListenerRegistration);
 
                 if (status != CELIX_SUCCESS) {
@@ -141,6 +140,18 @@ celix_status_t bundleActivator_start(void * userData, bundle_context_pt context)
 celix_status_t bundleActivator_stop(void * userData, bundle_context_pt context) {
     celix_status_t status = CELIX_SUCCESS;
     struct activator *activator = userData;
+
+    if (activator->wtmTracker != NULL) {
+    	if (serviceTracker_close(activator->wtmTracker) == CELIX_SUCCESS) {
+    		serviceTracker_destroy(activator->wtmTracker);
+    	}
+    }
+
+    if (activator->eplTracker != NULL) {
+    	if (serviceTracker_close(activator->eplTracker) == CELIX_SUCCESS) {
+    		serviceTracker_destroy(activator->eplTracker);
+    	}
+    }
 
     if (activator->registration != NULL) {
         serviceRegistration_unregister(activator->registration);
@@ -183,7 +194,7 @@ static celix_status_t bundleActivator_createEPLTracker(struct activator *activat
 }
 
 static celix_status_t bundleActivator_createWTMTracker(struct activator *activator, service_tracker_pt *tracker) {
-    celix_status_t status = CELIX_SUCCESS;
+    celix_status_t status;
 
     service_tracker_customizer_pt customizer = NULL;
 

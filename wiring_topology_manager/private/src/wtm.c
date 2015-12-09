@@ -99,6 +99,17 @@ celix_status_t wiringTopologyManager_destroy(wiring_topology_manager_pt manager)
     celixThreadMutex_unlock(&manager->exportedWiringEndpointsLock);
     celixThreadMutex_destroy(&manager->exportedWiringEndpointsLock);
 
+    arrayList_destroy(manager->waitingForExport);
+
+    int size = arrayList_size(manager->waitingForImport);
+
+     for (--size; size >= 0; --size) {
+         properties_pt reqProperties = (properties_pt) arrayList_get(manager->waitingForImport, size);
+         properties_destroy(reqProperties);
+     }
+
+    arrayList_destroy(manager->waitingForImport);
+
     free(manager);
 
     return status;
@@ -299,6 +310,13 @@ celix_status_t wiringTopologyManager_WiringAdminServiceExportWiringEndpoint(wiri
             } else {
 
                 char* serviceId = properties_get(srvcProperties, "service.id");
+                char* reqService = properties_get((*wEndpoint)->properties, "requested.service.id");
+
+                if (reqService != NULL) {
+                    printf("WTM: requested service is already set to %s - will be set to %s\n", reqService, serviceId);
+                    free(reqService);
+                }
+
                 properties_set((*wEndpoint)->properties, "requested.service.id", serviceId);
                 status = wiringTopologyManager_notifyListenersWiringEndpointAdded(manager, *wEndpoint);
             }
@@ -324,15 +342,12 @@ celix_status_t wiringTopologyManager_exportWiringEndpoint(wiring_topology_manage
 
         celixThreadMutex_lock(&manager->exportedWiringEndpointsLock);
 
-        // hmm...
         /*
          das problem ist dass srvcProperties auch die serviceId beinhaltet. wenn wir
          nun spaeter einen wiringAdmin hinzufuegen, werden nur die srvcProperties
          von ersterem gertiggeet. ich denke wir brachen eine weitere datenstruktur hier,
          welche sich alle serviceIds merkt
          */
-
-
 
         wiringAdminList = hashMap_get(manager->exportedWiringEndpoints, srvcProperties);
 
@@ -342,10 +357,10 @@ celix_status_t wiringTopologyManager_exportWiringEndpoint(wiring_topology_manage
 
             wiringTopologyManager_getWAs(manager, &wiringAdmins);
 
-            int listCnt = 0;
             int listSize = arrayList_size(wiringAdmins);
 
             if (listSize > 0) {
+                int listCnt = 0;
 
                 wiringAdminList = hashMap_create(NULL, NULL, NULL, NULL);
                 hashMap_put(manager->exportedWiringEndpoints, srvcProperties, wiringAdminList);
@@ -506,9 +521,6 @@ celix_status_t wiringTopologyManager_checkWiringEndpointForImportService(wiring_
        }
 
        arrayList_destroy(localWAs);
-
-    } else {
-       printf("WTM: rsaProperties do not match imported Endpoint\n");
     }
 
     return status;
@@ -544,6 +556,13 @@ celix_status_t wiringTopologyManager_importWiringEndpoint(wiring_topology_manage
                 printf("WTM: perform async notify about sucessfully informed WiringEndpoint\n");
 
                 /* async notifiy of RSA */
+                char* reqService = properties_get(wiringEndpointDesc->properties, "requested.service");
+
+                if (reqService != NULL) {
+                    printf("WTM: requested service is already set to %s - will be set %s\n", reqService, requestedService);
+                    free(reqService);
+                }
+
                 properties_set(wiringEndpointDesc->properties, "requested.service", requestedService);
 
                 status = wiringTopologyManager_notifyListenersWiringEndpointAdded(manager, wiringEndpointDesc);
@@ -555,14 +574,16 @@ celix_status_t wiringTopologyManager_importWiringEndpoint(wiring_topology_manage
 
     // according endpoint not found
     if (endpointAvailable == false) {
-            printf("WTM: according endpoint not found for service %s. Putting on the wait list.. \n", requestedService);
-
-           arrayList_add(manager->waitingForImport, rsaProperties);
+        printf("WTM: according endpoint not found for service %s. Putting on the wait list.. \n", requestedService);
+        arrayList_add(manager->waitingForImport, rsaProperties);
+    }
+    else {
+        properties_destroy(rsaProperties);
     }
 
     celixThreadMutex_unlock(&manager->importedWiringEndpointsLock);
 
-    // should be SUCESS, so the RSA can return SUCCESS to the TPM, so
+    // should be SUCCESS, so the RSA can return SUCCESS to the TPM, so
     // it can be removed later (even if it has never been imported)
 
     return status;
@@ -609,7 +630,7 @@ celix_status_t wiringTopologyManager_removeImportedWiringEndpoint(wiring_topolog
 
 /* informs about a sucessful exported wire */
 celix_status_t wiringTopologyManager_notifyListenersWiringEndpointAdded(wiring_topology_manager_pt manager, wiring_endpoint_description_pt wEndpoint) {
-    celix_status_t status = CELIX_SUCCESS;
+    celix_status_t status;
 
     status = celixThreadMutex_lock(&manager->listenerListLock);
 
@@ -647,7 +668,7 @@ celix_status_t wiringTopologyManager_notifyListenersWiringEndpointAdded(wiring_t
 }
 
 celix_status_t wiringTopologyManager_notifyListenersWiringEndpointRemoved(wiring_topology_manager_pt manager, wiring_endpoint_description_pt wEndpoint) {
-    celix_status_t status = CELIX_SUCCESS;
+    celix_status_t status;
 
     status = celixThreadMutex_lock(&manager->listenerListLock);
 

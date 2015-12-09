@@ -2,38 +2,16 @@
 # Licensed under Apache License v2. See LICENSE for more information.
 #
 
-find_package(CURL REQUIRED)
-find_package(Jansson REQUIRED)
+# Add -fPIC for x86_64 Unix platforms; this lib will be linked to a shared lib
+if(UNIX AND NOT WIN32)
+	find_program(CMAKE_UNAME uname /bin /usr/bin /usr/local/bin )
+	if(CMAKE_UNAME)
+		exec_program(uname ARGS -m OUTPUT_VARIABLE CMAKE_SYSTEM_PROCESSOR)
+		set(CMAKE_SYSTEM_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR} CACHE INTERNAL "processor type (i386 and x86_64)")
+		if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+			add_definitions(-fPIC)
+		endif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+	endif(CMAKE_UNAME)
+endif(UNIX AND NOT WIN32)
 
-include_directories(${CURL_INCLUDE_DIRS})
-include_directories(${JANSSON_INCLUDE_DIRS})
-include_directories("${CELIX_INCLUDE_DIR}/utils/public/include")
-include_directories("${CELIX_INCLUDE_DIR}/remote_services/utils/private/include")
-include_directories("${CELIX_INCLUDE_DIR}/remote_services/utils/public/include")
-include_directories("${CELIX_INCLUDE_DIR}/endpoint_listener")
-include_directories("${CELIX_INCLUDE_DIR}/log_service")
-include_directories("${CELIX_INCLUDE_DIR}/remote_service_admin")
-include_directories("${PROJECT_SOURCE_DIR}/remote_service_admin_inaetics/public/include")
-include_directories("${PROJECT_SOURCE_DIR}/remote_service_admin/private/include")
-include_directories("${PROJECT_SOURCE_DIR}/wiring_common/private/include")
-include_directories("${PROJECT_SOURCE_DIR}/wiring_common/public/include")
-
-include_directories("private/include")
-include_directories("${CELIX_INCLUDE_DIR}/remote_services/endpoint_listener/public/include")
-
-SET(BUNDLE_SYMBOLICNAME "apache_celix_wiring_remote_service_admin")
-SET(BUNDLE_VERSION "0.0.1")
-SET(BUNDLE_NAME "apache_celix_wiring_remote_service_admin")
-
-bundle(org.inaetics.remote_service_admin SOURCES 
-	private/src/remote_service_admin_impl
-	private/src/remote_service_admin_activator
-	${CELIX_DIR}/share/celix/log_service/log_helper
-    ${PROJECT_SOURCE_DIR}/remote_service_admin/private/src/export_registration_impl
-    ${PROJECT_SOURCE_DIR}/remote_service_admin/private/src/import_registration_impl
-	${PROJECT_SOURCE_DIR}/wiring_common/private/src/civetweb.c
-)
-
-install_bundle(org.inaetics.remote_service_admin)
-    
-target_link_libraries(org.inaetics.remote_service_admin ${CURL_LIBRARIES}  ${JANSSON_LIBRARIES})
+add_subdirectory(rsa)

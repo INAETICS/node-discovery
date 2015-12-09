@@ -6,13 +6,11 @@ find_package(CURL REQUIRED)
 
 include_directories(${CURL_INCLUDE_DIR})
 include_directories("${CELIX_INCLUDE_DIRS}/remote_service_admin")
-include_directories("${PROJECT_SOURCE_DIR}/remote_service_admin_inaetics/public/include")
+include_directories("${PROJECT_SOURCE_DIR}/remote_service_admin_inaetics/rsa/public/include")
 include_directories("${PROJECT_SOURCE_DIR}/wiring_common/public/include")
 include_directories("${PROJECT_SOURCE_DIR}/wiring_common/private/include")
 include_directories("private/include")
 # supposed to be the rsa
-include_directories("${PROJECT_SOURCE_DIR}/echo_server/public/include")
-include_directories("${CELIX_INCLUDE_DIRS}/shell")
 
 
 SET(BUNDLE_SYMBOLICNAME "apache_celix_wiring_admin")
@@ -29,4 +27,4 @@ bundle(org.inaetics.wiring_admin.WiringAdmin SOURCES
 
 install_bundle(org.inaetics.wiring_admin.WiringAdmin)
     
-target_link_libraries(org.inaetics.wiring_admin.WiringAdmin ${CURL_LIBRARIES})
+target_link_libraries(org.inaetics.wiring_admin.WiringAdmin ${CELIX_FRAMEWORK_LIBRARY} ${CELIX_UTILS_LIBRARY} ${CURL_LIBRARIES})

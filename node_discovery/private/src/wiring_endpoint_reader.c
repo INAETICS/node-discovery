@@ -95,7 +95,9 @@ celix_status_t wiringEndpoint_properties_load(char *inStr, properties_pt propert
 			}
 
 			if (!isComment) {
-				properties_set(properties, utils_stringTrim(key), utils_stringTrim(value));
+				if (properties_get(properties, utils_stringTrim(key)) == NULL) {
+					properties_set(properties, utils_stringTrim(key), utils_stringTrim(value));
+				}
 			}
 
 			line = strtok_r(NULL, delim, &saveptr);

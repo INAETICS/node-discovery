@@ -28,4 +28,4 @@ bundle(org.inaetics.wiring_topology_manager.WiringTopologyManager SOURCES
 
 install_bundle(org.inaetics.wiring_topology_manager.WiringTopologyManager)
 	
-target_link_libraries(org.inaetics.wiring_topology_manager.WiringTopologyManager ${CURL_LIBRARIES} ${JANSSON_LIBRARIES})
+target_link_libraries(org.inaetics.wiring_topology_manager.WiringTopologyManager ${CELIX_FRAMEWORK_LIBRARY} ${CELIX_UTILS_LIBRARY} ${CURL_LIBRARIES} ${JANSSON_LIBRARIES})

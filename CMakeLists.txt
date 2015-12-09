@@ -16,7 +16,8 @@ include_directories(${CELIX_INCLUDE_DIRS})
 add_subdirectory(wiring_topology_manager)
 add_subdirectory(node_discovery)
 add_subdirectory(wiring_admin)
-add_subdirectory(echo_server)
 add_subdirectory(remote_service_admin_inaetics)
+
+
 
 deploy_targets()
