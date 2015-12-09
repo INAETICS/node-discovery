@@ -140,8 +140,6 @@ celix_status_t wiringTopologyManager_checkWaitingForImportServices(wiring_topolo
                 char* requestedService = properties_get(reqProperties, "requested.service");
                 properties_set(wEndpoint->properties, "requested.service", requestedService);
                 wiringTopologyManager_notifyListenersWiringEndpointAdded(manager, wEndpoint);
-
-                properties_destroy(reqProperties);
             }
         }
 
@@ -523,9 +521,6 @@ celix_status_t wiringTopologyManager_checkWiringEndpointForImportService(wiring_
        }
 
        arrayList_destroy(localWAs);
-
-    } else {
-       printf("WTM: rsaProperties do not match imported Endpoint\n");
     }
 
     return status;
