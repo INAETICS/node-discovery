@@ -851,7 +851,7 @@ celix_status_t remoteServiceAdmin_removeImportedService(remote_service_admin_pt 
 		else {
 			importRegistration_close(import);
 			importRegistration_destroy(import);
-			logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "RSA: proxyService unregistered for %s w/ wireId %s.", endpointDescription->service);
+			logHelper_log(admin->loghelper, OSGI_LOGSERVICE_INFO, "RSA: proxyService unregistered for %s.", endpointDescription->service);
 		}
 
 		celixThreadMutex_unlock(&admin->importedServicesLock);
